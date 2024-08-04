@@ -9,8 +9,8 @@ import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 
 export default function UploadFile() {
-  const [text, setText] = useState('');
   const dispatch = useFilesDispatch();
+
   const [file, setFile] = useState(null);
 
   const [open, setOpen] = useState(false);
@@ -29,11 +29,8 @@ export default function UploadFile() {
     }
   };
 
-  const handleUpload = async () => {
-    if (file) {  
-      const formData = new FormData();
-      formData.append('file', file);
-  
+  const handleUpload = async (formData) => {
+    if (file) {        
       try {
         // You can write the URL of your server or any other endpoint used for file upload
         const result = await fetch('http://127.0.0.1:5000/upload', {
@@ -62,7 +59,10 @@ export default function UploadFile() {
           component: 'form',
           onSubmit: (event) => {
             event.preventDefault();
-            handleUpload();
+            const formData = new FormData(event.currentTarget);
+            formData.append("file",file)
+            console.log(formData);
+            handleUpload(formData);
             handleClose();
           },
         }}
@@ -74,7 +74,7 @@ export default function UploadFile() {
             required
             margin="dense"
             id="name"
-            name="email"
+            name="title"
             label="Title"
             type="text"
             fullWidth
@@ -85,7 +85,7 @@ export default function UploadFile() {
             required
             margin="dense"
             id="name"
-            name="email"
+            name="code"
             label="Course code"
             type="text"
             fullWidth
@@ -96,7 +96,7 @@ export default function UploadFile() {
             required
             margin="dense"
             id="name"
-            name="email"
+            name="prof"
             label="Professor"
             type="text"
             fullWidth
@@ -107,7 +107,7 @@ export default function UploadFile() {
             required
             margin="dense"
             id="name"
-            name="email"
+            name="session"
             label="Session"
             type="text"
             fullWidth
@@ -118,7 +118,7 @@ export default function UploadFile() {
             required
             margin="dense"
             id="name"
-            name="email"
+            name="year"
             label="Year"
             type="number"
             fullWidth
