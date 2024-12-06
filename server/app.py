@@ -33,8 +33,27 @@ def allowed_file(filename):
 
 @app.route('/files', methods=['GET'])
 def get_file_list():
-    pass
+    # Fetch all files
+    con = sqlite3.connect("files.db")
+    res = con.execute("SELECT id,filename,name,course_code,professor,session,year FROM files")
+    res = res.fetchall()
+    print(res)
+    total = []
+    if res != None:
+        for l in res:
+            json = {
+                "id": l[0],
+                "name": l[2],
+                "course_code": l[3],
+                "professor": l[4],
+                "session": l[5],
+                "year": l[6]
+            }
+            total.append(json)
+    con.close()
 
+    return total if res != None else "Erm"
+    
 @app.route('/upload', methods=['GET', 'POST'])
 def upload_file():
     if request.method == 'POST':
@@ -89,8 +108,11 @@ def download_file(id):
     id = int(id)    
     con = sqlite3.connect("files.db")
     res = con.execute("SELECT filename FROM files WHERE id=?", (id,))
-    con.close()
+    res = res.fetchone()
 
     if res != None:
-        name = str(res.fetchone()[0])
-        return send_from_directory(app.config["UPLOAD_FOLDER"], name)
+        name = str(res[0])
+        
+    con.close()
+
+    return send_from_directory(app.config["UPLOAD_FOLDER"], name) if res != None else "erm"
