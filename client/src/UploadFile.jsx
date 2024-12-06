@@ -60,7 +60,7 @@ export default function UploadFile() {
           onSubmit: (event) => {
             event.preventDefault();
             const formData = new FormData(event.currentTarget);
-            formData.append("file",file)
+            formData.append("file", file)
             console.log(formData);
             handleUpload(formData);
             handleClose();
