@@ -42,7 +42,7 @@ def get_file_list():
     if res != None:
         for l in res:
             json = {
-                "id": l[0],
+                "id": str(l[0]),
                 "name": l[2],
                 "course_code": l[3],
                 "professor": l[4],
@@ -52,7 +52,7 @@ def get_file_list():
             total.append(json)
     con.close()
 
-    return total if res != None else "Erm"
+    return total if res != None else None
     
 @app.route('/upload', methods=['GET', 'POST'])
 def upload_file():
@@ -103,7 +103,7 @@ def upload_file():
     return { "uploadSuccess": False }
 
 @app.route('/uploads/<id>', methods=['GET'])
-def download_file(id):
+def access_upload(id):
     # Select filename using ID in request
     id = int(id)    
     con = sqlite3.connect("files.db")
@@ -115,4 +115,16 @@ def download_file(id):
         
     con.close()
 
-    return send_from_directory(app.config["UPLOAD_FOLDER"], name) if res != None else "erm"
+    return send_from_directory(app.config["UPLOAD_FOLDER"], name) if res != None else None
+    
+@app.route('/delete/<id>', methods=['GET'])
+def delete_file(id):
+    id = int(id)
+    con = sqlite3.connect("files.db")
+    with con:
+        con.execute("DELETE FROM files WHERE id=?", (id,))
+    con.commit()
+    res = con.execute("SELECT filename FROM files WHERE id=?", (id,))
+    con.close()
+
+    return { "deleteSuccess": True } if res == None else { "deleteSuccess":False }

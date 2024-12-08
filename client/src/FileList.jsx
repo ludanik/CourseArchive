@@ -14,49 +14,32 @@ export default function FileList() {
   );
 }
 
+const handleDownloadFile = async (id) => {
+  try {
+    const url = 'http://127.0.0.1:5000/uploads/' + id
+    window.open(url, '_blank').focus();
+    const result = await fetch(url, {
+      method: 'GET',
+    });
+  } catch (error) {
+    console.error(error);
+  }
+};
+
 function File({ file }) {
   const [isEditing, setIsEditing] = useState(false);
   const dispatch = useFilesDispatch();
   let fileContent;
-  if (isEditing) {
-    fileContent = (
-      <>
-        <input
-          value={file.text}
-          onChange={e => {
-            dispatch({
-              type: 'changed',
-              file: {
-                ...file,
-                text: e.target.value
-              }
-            });
-          }} />
-        <button onClick={() => setIsEditing(false)}>
-          Save
-        </button>
-      </>
-    );
-  } else {
-    fileContent = (
-      <>
-        {file.text}
-        <button onClick={() => setIsEditing(true)}>
-          Edit
-        </button>
-      </>
-    );
-  }
+  fileContent = (
+    <>
+      {file.name} {file.course_code} {file.professor} {file.session} {file.year}
+    </>
+  );
   return (
     <label>
       {fileContent}
       <button onClick={() => {
-        alert("Viewed!")
-      }}>
-        View
-      </button>
-      <button onClick={() => {
-        alert("Downloaded!")
+        handleDownloadFile(file.id)
       }}>
         Download
       </button>
