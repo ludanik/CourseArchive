@@ -1,3 +1,10 @@
+import * as React from 'react';
+import Box from '@mui/material/Box';
+import Card from '@mui/material/Card';
+import CardActions from '@mui/material/CardActions';
+import CardContent from '@mui/material/CardContent';
+import Button from '@mui/material/Button';
+import Typography from '@mui/material/Typography';
 import { useState } from 'react';
 import { useFiles, useFilesDispatch } from './FilesContext.jsx';
 
@@ -10,7 +17,7 @@ export default function FileList() {
           <File file={file} />
         </li>
       ))}
-    </ul>
+    </ul> 
   );
 }
 
@@ -27,12 +34,20 @@ const handleDownloadFile = async (id) => {
 };
 
 function File({ file }) {
-  const [isEditing, setIsEditing] = useState(false);
   const dispatch = useFilesDispatch();
   let fileContent;
   fileContent = (
     <>
-      {file.name} {file.course_code} {file.professor} {file.session} {file.year}
+      Title: {file.name}
+      <br />
+      Professor: {file.professor}
+      <br/>
+      Session: {file.session}
+      <br/>
+      Course code: {file.course_code}
+      <br/>
+      Year: {file.year}
+      <br/>
     </>
   );
   return (

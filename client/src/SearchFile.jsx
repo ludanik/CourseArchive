@@ -4,6 +4,26 @@ import { useFilesDispatch } from './FilesContext.jsx';
 export default function SearchFile() {
   const [text, setText] = useState('');
   const dispatch = useFilesDispatch();
+
+  async function search() {
+    const result2 = await fetch('http://127.0.0.1:5000/files', {
+      method: 'GET',
+    });
+  
+    const data2 = await result2.json();
+  
+    dispatch({
+      type: 'set',
+      files: data2
+    })
+  
+    dispatch({
+      type: 'search',
+      keyword: text
+    });
+  }
+  
+
   return (
     <>
       <input
@@ -11,14 +31,7 @@ export default function SearchFile() {
         value={text}    
         onChange={e => setText(e.target.value)}
       />
-      <button onClick={() => {
-        setText('');
-        dispatch({
-          type: 'added',
-          id: nextId++,
-          text: text,
-        }); 
-      }}>Search</button>
+      <button onClick={search}> Search </button>
     </>
   );
 }

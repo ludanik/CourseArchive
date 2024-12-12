@@ -40,7 +40,17 @@ export default function UploadFile() {
   
         const data = await result.json();
   
-        console.log(data);
+        const result2 = await fetch('http://127.0.0.1:5000/files', {
+          method: 'GET',
+        });
+
+        const data2 = await result2.json();
+
+        dispatch({
+          type: 'set',
+          files: data2
+        })
+
       } catch (error) {
         console.error(error);
       }

@@ -15,10 +15,10 @@ CORS(app)
 con = sqlite3.connect("files.db")
 con.execute('''
     CREATE TABLE IF NOT EXISTS files (
-        id INTEGER PRIMARY KEY,
+        id INTEGER UNIQUE PRIMARY KEY,
         filename TEXT NOT NULL,
         name TEXT NOT NULL,
-        course_code TEXT UNIQUE NOT NULL,
+        course_code TEXT NOT NULL,
         professor TEXT NOT NULL,    
         session TEXT NOT NULL,
         year INTEGER NOT NULL
