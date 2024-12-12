@@ -94,7 +94,7 @@ def upload_file():
                 with con:
                     con.execute("INSERT INTO files VALUES(:id, :filename, :name, :course_code, :professor, :session, :year)", data)
             except sqlite3.IntegrityError:
-                print("woops")
+                raise sqlite3.IntegrityError
             finally:
                 con.close()
 
@@ -117,14 +117,32 @@ def access_upload(id):
 
     return send_from_directory(app.config["UPLOAD_FOLDER"], name) if res != None else None
     
-@app.route('/delete/<id>', methods=['GET'])
+@app.route('/delete/<id>', methods=['DELETE'])
 def delete_file(id):
+    # Remove from DB
     id = int(id)
     con = sqlite3.connect("files.db")
-    with con:
-        con.execute("DELETE FROM files WHERE id=?", (id,))
-    con.commit()
-    res = con.execute("SELECT filename FROM files WHERE id=?", (id,))
-    con.close()
+    filename = None
+    try:
+        res = con.execute("SELECT filename FROM files WHERE id=?", (id,))
+        res = res.fetchone()
+        if res != None:
+            print(res)
+            filename = res[0]
+            con.execute("DELETE FROM files WHERE id=?", (id,))
+            con.commit()
+        else:
+            print(f"Could not find file with id {id}")
+    except Exception as e:
+        raise e
+    finally:
+        con.close()
 
-    return { "deleteSuccess": True } if res == None else { "deleteSuccess":False }
+    # Remove physical file
+    if filename != None:
+        try:
+            os.remove(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        except:
+            print(f"Could not remove file {filename}")
+
+    return { "deleteSuccess": True } if res == None and filename != None else { "deleteSuccess": False }
