@@ -20,6 +20,7 @@ ALLOWED_EXTENSIONS = {'pdf'}
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.secret_key = 'teehee'
 CORS(app)
 
 con = sqlite3.connect("files.db")
@@ -74,8 +75,8 @@ def register():
     password for security.
     """
     if request.method == "POST":
-        username = request.form["username"]
-        password = request.form["password"]
+        username = request.form['username']
+        password = request.form['password']
         error = None
 
         if not username:
@@ -97,11 +98,13 @@ def register():
                 error = f"User {username} is already registered."
             else:
                 # Success, go to the login page.
+                print(f"Registered {username} {password}")
                 return {
                     "registerSuccess": True,
                     "error": error
                 }
         else:
+            print(error)
             return {
                 "registerSuccess": False,
                 "error": error
@@ -111,8 +114,9 @@ def register():
 def login():
     """Log in a registered user by adding the user id to the session."""
     if request.method == "POST":
-        username = request.form["username"]
-        password = request.form["password"]
+        username = request.form['username']
+        password = request.form['password']
+
         con = sqlite3.connect("files.db")
         error = None
         user = con.execute(
@@ -121,16 +125,22 @@ def login():
 
         if user is None:
             error = "Incorrect username."
-        elif not check_password_hash(user["password"], password):
+        elif not check_password_hash(user[2], password):
             error = "Incorrect password."
 
         if error is None:
             # store the user id in a new session and return to the index
             session.clear()
-            session["user_id"] = user["id"]
+            session["user_id"] = user[0]
+            print(f"Logged in {username} {password}")
             return {
                 "loginSuccess": True
             }
+        print(error)
+        return {
+            "loginSuccess": False,
+            "error": error
+        }
 
 @app.route("/logout", methods=['GET'])
 def logout():
@@ -185,7 +195,6 @@ def upload_file():
         #    If the user does not select a file, the browser submits an
         # empty file without a filename.
         if file.filename == '':
-            flash('No selected file')
             return {
                 "uploadSuccess": False 
             }
