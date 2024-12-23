@@ -4,26 +4,48 @@ from werkzeug.utils import secure_filename
 from flask import send_from_directory
 from flask_cors import CORS
 import sqlite3
+from flask import flash
+from flask import g
+from flask import redirect
+from flask import render_template
+from flask import request
+from flask import session
+from flask import url_for
+from werkzeug.security import check_password_hash
+from werkzeug.security import generate_password_hash
+import functools
 
 UPLOAD_FOLDER = '/home/ian/repos/CourseArchive/server/files'
-ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg', 'gif'}
+ALLOWED_EXTENSIONS = {'pdf'}
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 CORS(app)
 
 con = sqlite3.connect("files.db")
-con.execute('''
+
+con.execute('''    
     CREATE TABLE IF NOT EXISTS files (
-        id INTEGER UNIQUE PRIMARY KEY,
+        id INTEGER UNIQUE PRIMARY KEY AUTOINCREMENT,
+        author_id INTEGER NOT NULL,
         filename TEXT NOT NULL,
         name TEXT NOT NULL,
         course_code TEXT NOT NULL,
-        professor TEXT NOT NULL,    
-        session TEXT NOT NULL,
-        year INTEGER NOT NULL
-    )
+        professor TEXT NOT NULL,
+        created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        year INTEGER NOT NULL,
+        FOREIGN KEY (author_id) REFERENCES user (id)
+    );
 ''')
+
+con.execute('''
+    CREATE TABLE IF NOT EXISTS user (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL
+        );    
+    ''')
+
 con.commit()
 con.close()
 
@@ -31,11 +53,101 @@ def allowed_file(filename):
     return '.' in filename and \
         filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+@app.before_request
+def load_logged_in_user():
+    """If a user id is stored in the session, load the user object from
+    the database into ``g.user``."""
+    user_id = session.get("user_id")
+
+    if user_id is None:
+        g.user = None
+    else:
+        con = sqlite3.connect("files.db")
+        g.user = con.execute("SELECT * FROM user WHERE id = ?", (user_id,)).fetchone()
+        con.close()
+
+@app.route("/register", methods=("GET", "POST"))
+def register():
+    """Register a new user.
+
+    Validates that the username is not already taken. Hashes the
+    password for security.
+    """
+    if request.method == "POST":
+        username = request.form["username"]
+        password = request.form["password"]
+        error = None
+
+        if not username:
+            error = "Username is required."
+        elif not password:
+            error = "Password is required."
+
+        if error is None:
+            try:
+                con = sqlite3.connect("files.db")
+                con.execute(
+                    "INSERT INTO user (username, password) VALUES (?, ?)",
+                    (username, generate_password_hash(password)),
+                )
+                con.commit()
+            except sqlite3.IntegrityError:
+                # The username was already taken, which caused the
+                # commit to fail. Show a validation error.
+                error = f"User {username} is already registered."
+            else:
+                # Success, go to the login page.
+                return {
+                    "registerSuccess": True,
+                    "error": error
+                }
+        else:
+            return {
+                "registerSuccess": False,
+                "error": error
+            }
+        
+@app.route("/login", methods=("GET", "POST"))
+def login():
+    """Log in a registered user by adding the user id to the session."""
+    if request.method == "POST":
+        username = request.form["username"]
+        password = request.form["password"]
+        con = sqlite3.connect("files.db")
+        error = None
+        user = con.execute(
+            "SELECT * FROM user WHERE username = ?", (username,)
+        ).fetchone()
+
+        if user is None:
+            error = "Incorrect username."
+        elif not check_password_hash(user["password"], password):
+            error = "Incorrect password."
+
+        if error is None:
+            # store the user id in a new session and return to the index
+            session.clear()
+            session["user_id"] = user["id"]
+            return {
+                "loginSuccess": True
+            }
+
+@app.route("/logout", methods=['GET'])
+def logout():
+    """Clear the current session, including the stored user id."""
+    session.clear()
+    return redirect(url_for("index"))
+
 @app.route('/files', methods=['GET'])
 def get_file_list():
     # Fetch all files
+    if g.user is None:
+        return {
+            "error":"log in lil bro"
+        }
+
     con = sqlite3.connect("files.db")
-    res = con.execute("SELECT id,filename,name,course_code,professor,session,year FROM files")
+    res = con.execute("SELECT id,filename,name,course_code,professor,year FROM files")
     res = res.fetchall()
     print(res)
     total = []
@@ -53,9 +165,14 @@ def get_file_list():
     con.close()
 
     return total if res != None else None
-    
+
 @app.route('/upload', methods=['GET', 'POST'])
 def upload_file():
+    if g.user is None:
+        return {
+            "error":"log in lil bro"
+        }
+
     if request.method == 'POST':
         print(request.form, flush=True)
         # check if the post request has the file part
@@ -102,8 +219,19 @@ def upload_file():
         
     return { "uploadSuccess": False }
 
+def update():
+    if g.user is None:
+        return {
+            "error":"log in lil bro"
+        }
+
 @app.route('/uploads/<id>', methods=['GET'])
 def access_upload(id):
+    if g.user is None:
+        return {
+            "error":"log in lil bro"
+        }
+    
     # Select filename using ID in request
     id = int(id)    
     con = sqlite3.connect("files.db")
@@ -116,9 +244,14 @@ def access_upload(id):
     con.close()
 
     return send_from_directory(app.config["UPLOAD_FOLDER"], name) if res != None else None
-    
+
 @app.route('/delete/<id>', methods=['DELETE'])
 def delete_file(id):
+    if g.user is None:
+        return {
+            "error":"log in lil bro"
+        }
+
     # Remove from DB
     id = int(id)
     con = sqlite3.connect("files.db")
