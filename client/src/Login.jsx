@@ -4,7 +4,6 @@ import TextField from '@mui/material/TextField';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
-import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 import { useState } from 'react';
 
@@ -25,7 +24,8 @@ export default function Login({ setLoggedIn }) {
         // You can write the URL of your server or any other endpoint used for file upload
         const result = await fetch('http://127.0.0.1:5000/login', {
             method: 'POST',
-            body: formData
+            body: formData,
+            credentials: 'include',
         });
       
         const data = await result.json();
@@ -41,7 +41,7 @@ export default function Login({ setLoggedIn }) {
   
   return (
     <>
-      <button onClick={handleClickOpen}>
+      <button id="login" onClick={handleClickOpen}>
         Login
       </button>
       <Dialog

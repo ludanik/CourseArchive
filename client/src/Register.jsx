@@ -26,7 +26,8 @@ export default function Register() {
         // You can write the URL of your server or any other endpoint used for file upload
         const result = await fetch('http://127.0.0.1:5000/register', {
             method: 'POST',
-            body: formData
+            body: formData,
+            credentials: 'include',
         });
       
         const data = await result.json();
@@ -38,7 +39,7 @@ export default function Register() {
   
   return (
     <>
-      <button onClick={handleClickOpen}>
+      <button id="login" onClick={handleClickOpen}>
         Register
       </button>
       <Dialog

@@ -1,19 +1,9 @@
 import os
-from flask import Flask, flash, request, redirect, url_for
+from flask import Flask, flash, request, redirect, url_for, send_from_directory, session, g
 from werkzeug.utils import secure_filename
-from flask import send_from_directory
+from werkzeug.security import check_password_hash, generate_password_hash
 from flask_cors import CORS
 import sqlite3
-from flask import flash
-from flask import g
-from flask import redirect
-from flask import render_template
-from flask import request
-from flask import session
-from flask import url_for
-from werkzeug.security import check_password_hash
-from werkzeug.security import generate_password_hash
-import functools
 
 UPLOAD_FOLDER = '/home/ian/repos/CourseArchive/server/files'
 ALLOWED_EXTENSIONS = {'pdf'}
@@ -21,7 +11,9 @@ ALLOWED_EXTENSIONS = {'pdf'}
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.secret_key = 'teehee'
-CORS(app)
+SESSION_TYPE = 'filesystem'
+app.config.from_object(__name__)
+CORS(app, supports_credentials=True)
 
 con = sqlite3.connect("files.db")
 
@@ -53,19 +45,6 @@ con.close()
 def allowed_file(filename):
     return '.' in filename and \
         filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-@app.before_request
-def load_logged_in_user():
-    """If a user id is stored in the session, load the user object from
-    the database into ``g.user``."""
-    user_id = session.get("user_id")
-
-    if user_id is None:
-        g.user = None
-    else:
-        con = sqlite3.connect("files.db")
-        g.user = con.execute("SELECT * FROM user WHERE id = ?", (user_id,)).fetchone()
-        con.close()
 
 @app.route("/register", methods=("GET", "POST"))
 def register():
@@ -122,7 +101,7 @@ def login():
         user = con.execute(
             "SELECT * FROM user WHERE username = ?", (username,)
         ).fetchone()
-
+        print(user)
         if user is None:
             error = "Incorrect username."
         elif not check_password_hash(user[2], password):
@@ -151,7 +130,7 @@ def logout():
 @app.route('/files', methods=['GET'])
 def get_file_list():
     # Fetch all files
-    if g.user is None:
+    if session["user_id"] is None:
         return {
             "error":"log in lil bro"
         }
@@ -168,8 +147,7 @@ def get_file_list():
                 "name": l[2],
                 "course_code": l[3],
                 "professor": l[4],
-                "session": l[5],
-                "year": l[6]
+                "year": l[5],
             }
             total.append(json)
     con.close()
@@ -178,7 +156,7 @@ def get_file_list():
 
 @app.route('/upload', methods=['GET', 'POST'])
 def upload_file():
-    if g.user is None:
+    if session["user_id"] is None:
         return {
             "error":"log in lil bro"
         }
@@ -203,6 +181,7 @@ def upload_file():
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
 
             data = {
+                "author_id":session["user_id"],
                 "name":request.form["title"], 
                 "filename":filename,
                 "course_code":request.form["code"], 
@@ -218,7 +197,7 @@ def upload_file():
             try:
                 con = sqlite3.connect("files.db")
                 with con:
-                    con.execute("INSERT INTO files VALUES(:id, :filename, :name, :course_code, :professor, :session, :year)", data)
+                    con.execute("INSERT INTO files VALUES(:id, :author_id, :filename, :name, :course_code, :professor, :session, :year)", data)
             except sqlite3.IntegrityError:
                 raise sqlite3.IntegrityError
             finally:
@@ -229,17 +208,17 @@ def upload_file():
     return { "uploadSuccess": False }
 
 def update():
-    if g.user is None:
+    if session["user_id"] is None:
         return {
             "error":"log in lil bro"
         }
 
 @app.route('/uploads/<id>', methods=['GET'])
 def access_upload(id):
-    if g.user is None:
-        return {
-            "error":"log in lil bro"
-        }
+    if session["user_id"] is None:
+            return {
+                "error":"log in lil bro"
+            }
     
     # Select filename using ID in request
     id = int(id)    
@@ -256,11 +235,11 @@ def access_upload(id):
 
 @app.route('/delete/<id>', methods=['DELETE'])
 def delete_file(id):
-    if g.user is None:
+    if session["user_id"] is None:
         return {
             "error":"log in lil bro"
         }
-
+    
     # Remove from DB
     id = int(id)
     con = sqlite3.connect("files.db")

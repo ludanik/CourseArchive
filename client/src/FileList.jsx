@@ -27,6 +27,7 @@ const handleDownloadFile = async (id) => {
     window.open(url, '_blank').focus();
     const result = await fetch(url, {
       method: 'GET',
+      credentials: 'include',
     });
   } catch (error) {
     console.error(error);

@@ -27,8 +27,10 @@ export default function FileApp() {
   else {
     return (
       <>
-        <Login setLoggedIn={setLoggedIn}/>
-        <Register/>
+        <div id="login">
+          <Login setLoggedIn={setLoggedIn}/>
+          <Register/>
+        </div>
       </>
     )
   }

@@ -8,6 +8,7 @@ export default function SearchFile() {
   async function search() {
     const result2 = await fetch('http://127.0.0.1:5000/files', {
       method: 'GET',
+      credentials: 'include',
     });
   
     const data2 = await result2.json();
@@ -22,7 +23,6 @@ export default function SearchFile() {
       keyword: text
     });
   }
-  
 
   return (
     <>

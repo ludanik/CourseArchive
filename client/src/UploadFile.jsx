@@ -36,12 +36,14 @@ export default function UploadFile() {
         const result = await fetch('http://127.0.0.1:5000/upload', {
           method: 'POST',
           body: formData,
+          credentials: 'include',
         });
   
         const data = await result.json();
   
         const result2 = await fetch('http://127.0.0.1:5000/files', {
           method: 'GET',
+          credentials: 'include',
         });
 
         const data2 = await result2.json();
