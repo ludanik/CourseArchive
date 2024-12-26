@@ -18,3 +18,8 @@ dist
 stats.html
 
 *.eslintcache
+
+# Flask
+*.flask_session
+*flask_session
+

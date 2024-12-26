@@ -39,6 +39,7 @@ const filesReducer = (files, action) => {
     case 'deleted': {
       fetch('http://127.0.0.1:5000/delete/' + action.id, {
         method: 'DELETE',
+        credentials: 'include',
       });
 
       return files.filter(t => t.id !== action.id);

@@ -63,10 +63,10 @@ export default function Login({ setLoggedIn }) {
             autoFocus
             required
             margin="dense"
-            id="username"
-            name="username"
-            label="Username"
-            type="text"
+            id="email"
+            name="email"
+            label="Email"
+            type="email"
             fullWidth
             variant="standard"
           />

@@ -119,17 +119,6 @@ export default function UploadFile() {
             required
             margin="dense"
             id="name"
-            name="session"
-            label="Session"
-            type="text"
-            fullWidth
-            variant="standard"
-          />
-          <TextField
-            autoFocus
-            required
-            margin="dense"
-            id="name"
             name="year"
             label="Year"
             type="number"

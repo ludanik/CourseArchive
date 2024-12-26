@@ -1,9 +1,10 @@
 import os
-from flask import Flask, flash, request, redirect, url_for, send_from_directory, session, g
+from flask import Flask, flash, request, redirect, url_for, send_from_directory, session
 from werkzeug.utils import secure_filename
 from werkzeug.security import check_password_hash, generate_password_hash
 from flask_cors import CORS
 import sqlite3
+import re
 
 UPLOAD_FOLDER = '/home/ian/repos/CourseArchive/server/files'
 ALLOWED_EXTENSIONS = {'pdf'}
@@ -54,14 +55,29 @@ def register():
     password for security.
     """
     if request.method == "POST":
-        username = request.form['username']
+        username = request.form['email']
         password = request.form['password']
+
         error = None
 
-        if not username:
-            error = "Username is required."
-        elif not password:
-            error = "Password is required."
+        if not username or not password:
+            return {
+                "registerSuccess": False,
+                "error": "pipe down u aint slick"
+            }
+
+        if not re.match("[-A-Za-z0-9!#$%&'*+/=?^_`{|}~]+(?:\.[-A-Za-z0-9!#$%&'*+/=?^_`{|}~]+)*@(?:[A-Za-z0-9](?:[-A-Za-z0-9]*[A-Za-z0-9])?\.)+[A-Za-z0-9](?:[-A-Za-z0-9]*[A-Za-z0-9])?", username):
+            return {
+                "registerSuccess": False,
+                "error": "just put the fries in the bag bro"
+            }
+
+        arr = username.split("@")
+        if arr[1] != "my.yorku.ca":
+            return {
+                "registerSuccess": False,
+                "error": "just put the fries in the bag bro"
+            }
 
         if error is None:
             try:
@@ -74,7 +90,10 @@ def register():
             except sqlite3.IntegrityError:
                 # The username was already taken, which caused the
                 # commit to fail. Show a validation error.
-                error = f"User {username} is already registered."
+                return {
+                    "registerSuccess": False,
+                    "error": "yeah ur cooked"
+                } 
             else:
                 # Success, go to the login page.
                 print(f"Registered {username} {password}")
@@ -93,7 +112,7 @@ def register():
 def login():
     """Log in a registered user by adding the user id to the session."""
     if request.method == "POST":
-        username = request.form['username']
+        username = request.form['email']
         password = request.form['password']
 
         con = sqlite3.connect("files.db")
@@ -102,10 +121,26 @@ def login():
             "SELECT * FROM user WHERE username = ?", (username,)
         ).fetchone()
         print(user)
-        if user is None:
-            error = "Incorrect username."
-        elif not check_password_hash(user[2], password):
-            error = "Incorrect password."
+        con.close()
+
+        if user is None or not check_password_hash(user[2], password):
+            return {
+                "loginSuccess": False,
+                "error": "just put the fries in the bag bro"
+            }
+
+        if not re.match("[-A-Za-z0-9!#$%&'*+/=?^_`{|}~]+(?:\.[-A-Za-z0-9!#$%&'*+/=?^_`{|}~]+)*@(?:[A-Za-z0-9](?:[-A-Za-z0-9]*[A-Za-z0-9])?\.)+[A-Za-z0-9](?:[-A-Za-z0-9]*[A-Za-z0-9])?", username):
+            return {
+                "registerSuccess": False,
+                "error": "just put the fries in the bag bro"
+            }
+
+        arr = username.split("@")
+        if arr[1] != "my.yorku.ca":
+            return {
+                "registerSuccess": False,
+                "error": "just put the fries in the bag bro"
+            }
 
         if error is None:
             # store the user id in a new session and return to the index
@@ -165,7 +200,6 @@ def upload_file():
         print(request.form, flush=True)
         # check if the post request has the file part
         if 'file' not in request.files:
-            flash('No file part')
             return {
                 "uploadSuccess": False 
             }

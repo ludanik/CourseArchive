@@ -43,8 +43,6 @@ function File({ file }) {
       <br />
       Professor: {file.professor}
       <br/>
-      Session: {file.session}
-      <br/>
       Course code: {file.course_code}
       <br/>
       Year: {file.year}

@@ -9,7 +9,7 @@ import DialogTitle from '@mui/material/DialogTitle';
 import { useState } from 'react';
 
 
-export default function Register() {
+export default function Register({ setLoggedIn }) {
 
     const [open, setOpen] = useState(false);
 
@@ -32,6 +32,20 @@ export default function Register() {
       
         const data = await result.json();
     
+        if (data.error == null) {
+            const result2 = await fetch('http://127.0.0.1:5000/login', {
+              method: 'POST',
+              body: formData,
+              credentials: 'include',
+          });
+      
+          const data2 = await result2.json();
+
+          if (data2.error == null) {
+            setLoggedIn(true)
+          }
+        }
+
         } catch (error) {
         console.error(error);
         }
@@ -61,10 +75,10 @@ export default function Register() {
             autoFocus
             required
             margin="dense"
-            id="username"
-            name="username"
-            label="Username"
-            type="text"
+            id="email"
+            name="email"
+            label="Email"
+            type="email"
             fullWidth
             variant="standard"
           />

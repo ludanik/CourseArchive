@@ -29,7 +29,7 @@ export default function FileApp() {
       <>
         <div id="login">
           <Login setLoggedIn={setLoggedIn}/>
-          <Register/>
+          <Register setLoggedIn={setLoggedIn}/>
         </div>
       </>
     )
