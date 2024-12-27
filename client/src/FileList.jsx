@@ -8,13 +8,13 @@ import Typography from '@mui/material/Typography';
 import { useState } from 'react';
 import { useFiles, useFilesDispatch } from './FilesContext.jsx';
 
-export default function FileList() {
+export default function FileList({ user }) {
   const files = useFiles();
   return (
     <ul>
       {files.map(file => (
         <li key={file.id}>
-          <File file={file} />
+          <File user={user} file={file} />
         </li>
       ))}
     </ul> 
@@ -34,29 +34,26 @@ const handleDownloadFile = async (id) => {
   }
 };
 
-function File({ file }) {
+function File({ file, user }) {
   const dispatch = useFilesDispatch();
   let fileContent;
   fileContent = (
     <>
-      Title: {file.name}
+      {file.name}
       <br />
-      Professor: {file.professor}
+      {file.professor}
       <br/>
-      Course code: {file.course_code}
+      {file.course_code}
       <br/>
-      Year: {file.year}
+      {file.year} 
+      <br/>
+      {file.author_name}
       <br/>
     </>
   );
-  return (
-    <label>
-      {fileContent}
-      <button onClick={() => {
-        handleDownloadFile(file.id)
-      }}>
-        Download
-      </button>
+  let deleteButton;
+  if (file.author_name === user) {
+    deleteButton = (
       <button onClick={() => {
         dispatch({
           type: 'deleted',
@@ -65,6 +62,17 @@ function File({ file }) {
       }}>
         Delete
       </button>
+    );
+  }
+  return (
+    <label>
+      {fileContent}
+      <button onClick={() => {
+        handleDownloadFile(file.id)
+      }}>
+        Download
+      </button>
+      {deleteButton}
     </label>
   );
 }

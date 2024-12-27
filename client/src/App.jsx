@@ -9,17 +9,29 @@ import { useState } from 'react';
 
 export default function FileApp() {
   const [loggedIn, setLoggedIn] = useState(false);
+  const [user, setUser] = useState('');
   
+  const handleLogOut = () => {
+    setLoggedIn(false);
+    setUser('');
+  };  
+
   if (loggedIn) {
     return ( 
       <FilesProvider>
+        <div id="top">
+            <h1>Course Files</h1>
+            <div id="logout">
+              <h3>Logged in as {user}</h3>
+              <button onClick={handleLogOut}>Log out</button>
+            </div>
+        </div>
         <div id="main">
-          <h1>Course Files</h1>
           <div>
             <UploadFile />
             <SearchFile />
           </div>
-          <FileList />
+          <FileList user={user} />
         </div>
       </FilesProvider>
     );
@@ -28,8 +40,8 @@ export default function FileApp() {
     return (
       <>
         <div id="login">
-          <Login setLoggedIn={setLoggedIn}/>
-          <Register setLoggedIn={setLoggedIn}/>
+          <Login setLoggedIn={setLoggedIn} setUser={setUser}/>
+          <Register setLoggedIn={setLoggedIn} setUser={setUser}/>
         </div>
       </>
     )

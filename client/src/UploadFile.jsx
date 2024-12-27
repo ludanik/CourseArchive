@@ -7,6 +7,13 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
+import * as React from 'react';
+import Box from '@mui/material/Box';
+import InputLabel from '@mui/material/InputLabel';
+import MenuItem from '@mui/material/MenuItem';
+import FormControl from '@mui/material/FormControl';
+import Select from '@mui/material/Select';
+
 
 export default function UploadFile() {
   const dispatch = useFilesDispatch();
@@ -14,6 +21,12 @@ export default function UploadFile() {
   const [file, setFile] = useState(null);
 
   const [open, setOpen] = useState(false);
+
+  const [type, setType] = useState('');
+
+  const handleTypeChange = (event) => {
+    setType(event.target.value);
+  };
 
   const handleClickOpen = () => {
     setOpen(true);
@@ -29,6 +42,7 @@ export default function UploadFile() {
     }
   };
 
+ 
   const handleUpload = async (formData) => {
     if (file) {        
       try {
@@ -73,6 +87,7 @@ export default function UploadFile() {
             event.preventDefault();
             const formData = new FormData(event.currentTarget);
             formData.append("file", file)
+            formData.append("type,", type)
             console.log(formData);
             handleUpload(formData);
             handleClose();
@@ -81,6 +96,19 @@ export default function UploadFile() {
       >
         <DialogTitle>Upload File</DialogTitle>
         <DialogContent>
+        <InputLabel id="demo-simple-select-label">Document Type</InputLabel>
+        <Select
+          labelId="demo-simple-select-label"
+          id="demo-simple-select"
+          value={type}
+          label="Type"
+          onChange={handleTypeChange}
+        >
+          <MenuItem value={"Exam"}>Exam</MenuItem>
+          <MenuItem value={"Test"}>Test</MenuItem>
+          <MenuItem value={"Assignment"}>Assignment</MenuItem>
+          <MenuItem value={"Syllabus"}>Syllabus</MenuItem>
+        </Select>
         <TextField
             autoFocus
             required

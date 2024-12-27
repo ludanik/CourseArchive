@@ -8,7 +8,7 @@ import DialogTitle from '@mui/material/DialogTitle';
 import { useState } from 'react';
 
 
-export default function Login({ setLoggedIn }) {
+export default function Login({ setLoggedIn, setUser }) {
     const [open, setOpen] = useState(false);
 
     const handleClickOpen = () => {
@@ -32,6 +32,7 @@ export default function Login({ setLoggedIn }) {
 
         if (data.error == null) {
             setLoggedIn(true)
+            setUser(formData.get("email"))
         }
     
         } catch (error) {

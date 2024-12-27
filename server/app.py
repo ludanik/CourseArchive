@@ -5,6 +5,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from flask_cors import CORS
 import sqlite3
 import re
+import time
 
 UPLOAD_FOLDER = '/home/ian/repos/CourseArchive/server/files'
 ALLOWED_EXTENSIONS = {'pdf'}
@@ -63,20 +64,20 @@ def register():
         if not username or not password:
             return {
                 "registerSuccess": False,
-                "error": "pipe down u aint slick"
+                "error": "bad user or pass"
             }
 
         if not re.match("[-A-Za-z0-9!#$%&'*+/=?^_`{|}~]+(?:\.[-A-Za-z0-9!#$%&'*+/=?^_`{|}~]+)*@(?:[A-Za-z0-9](?:[-A-Za-z0-9]*[A-Za-z0-9])?\.)+[A-Za-z0-9](?:[-A-Za-z0-9]*[A-Za-z0-9])?", username):
             return {
                 "registerSuccess": False,
-                "error": "just put the fries in the bag bro"
+                "error": "no email format sir"
             }
 
         arr = username.split("@")
         if arr[1] != "my.yorku.ca":
             return {
                 "registerSuccess": False,
-                "error": "just put the fries in the bag bro"
+                "error": "my.yorku.ca mandatory sir"
             }
 
         if error is None:
@@ -92,15 +93,18 @@ def register():
                 # commit to fail. Show a validation error.
                 return {
                     "registerSuccess": False,
-                    "error": "yeah ur cooked"
+                    "error": "username taken"
                 } 
-            else:
-                # Success, go to the login page.
-                print(f"Registered {username} {password}")
-                return {
-                    "registerSuccess": True,
-                    "error": error
-                }
+            finally:
+                con.close()
+
+            # Success, go to the login page.
+            print(f"Registered {username} {password}")
+            return {
+                "registerSuccess": True,
+                "error": error
+            }
+                
         else:
             print(error)
             return {
@@ -131,14 +135,14 @@ def login():
 
         if not re.match("[-A-Za-z0-9!#$%&'*+/=?^_`{|}~]+(?:\.[-A-Za-z0-9!#$%&'*+/=?^_`{|}~]+)*@(?:[A-Za-z0-9](?:[-A-Za-z0-9]*[A-Za-z0-9])?\.)+[A-Za-z0-9](?:[-A-Za-z0-9]*[A-Za-z0-9])?", username):
             return {
-                "registerSuccess": False,
+                "loginSuccess": False,
                 "error": "just put the fries in the bag bro"
             }
 
         arr = username.split("@")
         if arr[1] != "my.yorku.ca":
             return {
-                "registerSuccess": False,
+                "loginSuccess": False,
                 "error": "just put the fries in the bag bro"
             }
 
@@ -171,18 +175,33 @@ def get_file_list():
         }
 
     con = sqlite3.connect("files.db")
-    res = con.execute("SELECT id,filename,name,course_code,professor,year FROM files")
+    res = con.execute("""SELECT 
+                        f.id,
+                        f.author_id,
+                        u.username,
+                        f.filename,
+                        f.name,
+                        f.course_code,
+                        f.professor,
+                        f.created,
+                        f.year
+                        FROM files f
+                        JOIN user u ON f.author_id = u.id; """)
+
     res = res.fetchall()
+
     print(res)
     total = []
     if res != None:
         for l in res:
             json = {
                 "id": str(l[0]),
-                "name": l[2],
-                "course_code": l[3],
-                "professor": l[4],
-                "year": l[5],
+                "author_id":l[1],
+                "author_name":l[2],
+                "name": l[4],
+                "course_code": l[5],
+                "professor": l[6],
+                "year": l[8],
             }
             total.append(json)
     con.close()
@@ -220,18 +239,17 @@ def upload_file():
                 "filename":filename,
                 "course_code":request.form["code"], 
                 "professor":request.form["prof"], 
-                "session":request.form["session"], 
-                "year":request.form["year"]
+                "year":request.form["year"],
+                "timestamp":int(time.time()) 
             } 
 
             data["id"] = abs ( hash(data["name"] + data["filename"] + data["course_code"]) )
 
             print(f"id: {data["id"]}")
-
             try:
                 con = sqlite3.connect("files.db")
-                with con:
-                    con.execute("INSERT INTO files VALUES(:id, :author_id, :filename, :name, :course_code, :professor, :session, :year)", data)
+                with con:   
+                    con.execute("INSERT INTO files VALUES(:id, :author_id, :filename, :name, :course_code, :professor, :timestamp, :year)", data)
             except sqlite3.IntegrityError:
                 raise sqlite3.IntegrityError
             finally:
@@ -273,7 +291,7 @@ def delete_file(id):
         return {
             "error":"log in lil bro"
         }
-    
+
     # Remove from DB
     id = int(id)
     con = sqlite3.connect("files.db")
