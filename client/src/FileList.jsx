@@ -36,25 +36,16 @@ const handleDownloadFile = async (id) => {
 
 function File({ file, user }) {
   const dispatch = useFilesDispatch();
+
+  const [isEditing, setIsEditing] = useState(false);
+  
   let fileContent;
-  fileContent = (
-    <>
-      {file.name}
-      <br />
-      {file.professor}
-      <br/>
-      {file.course_code}
-      <br/>
-      {file.year} 
-      <br/>
-      {file.author_name}
-      <br/>
-    </>
-  );
-  let deleteButton;
+  let buttons;
+
   if (file.author_name === user) {
-    deleteButton = (
-      <button onClick={() => {
+    buttons = (
+      <>
+        <button onClick={() => {
         dispatch({
           type: 'deleted',
           id: file.id
@@ -62,8 +53,98 @@ function File({ file, user }) {
       }}>
         Delete
       </button>
+      <button onClick={() => setIsEditing(true)}>
+          Edit
+        </button>
+      </>
     );
   }
+
+  if (isEditing) {
+    fileContent = (
+      <>
+        <input
+          value={file.name}
+          onChange={e => {
+            dispatch({
+              type: 'changed',
+              file: {
+                ...file,
+                name: e.target.value
+              }
+            });
+          }} />
+          <br/>
+          <input
+          value={file.professor}
+          onChange={e => {
+            dispatch({
+              type: 'changed',
+              file: {
+                ...file,
+                professor: e.target.value
+              }
+            });
+          }} />
+          <br/>
+          <input
+          value={file.course_code}
+          onChange={e => {
+            dispatch({
+              type: 'changed',
+              file: {
+                ...file,
+                course_code: e.target.value
+              }
+            });
+          }} />
+          <br/>
+          <input
+          value={file.year}
+          onChange={e => {
+            dispatch({
+              type: 'changed',
+              file: {
+                ...file,
+                year: e.target.value
+              }
+            });
+          }} />
+          <br/>
+        <button onClick={() => {
+          setIsEditing(false)
+          // tell backend we have changed a file
+          const result2 = fetch('http://127.0.0.1:5000/update/' + file.id, {
+            method: 'PUT',
+            credentials: 'include',
+            body: JSON.stringify(file),
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+        }}>
+          Save
+        </button>
+      </>
+    );
+  }
+  else {
+    fileContent = (
+      <>
+        {file.name}
+        <br />
+        {file.professor}
+        <br/>
+        {file.course_code}
+        <br/>
+        {file.year} 
+        <br/>
+        {file.author_name}
+        <br/>
+      </>
+    );
+  }
+
   return (
     <label>
       {fileContent}
@@ -72,7 +153,7 @@ function File({ file, user }) {
       }}>
         Download
       </button>
-      {deleteButton}
+      {buttons}
     </label>
   );
 }

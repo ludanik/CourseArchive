@@ -259,11 +259,45 @@ def upload_file():
         
     return { "uploadSuccess": False }
 
-def update():
+@app.route('/update/<id>', methods=['PUT'])
+def update(id):
     if session["user_id"] is None:
         return {
             "error":"log in lil bro"
+        }   
+    
+    id = int(id)
+    updateSuccess = False
+    error = None
+
+    data = request.get_json()
+    print(data)
+    if not data:
+        return {
+            "updateSuccess": False,
+            "error": "No data provided"
         }
+
+    try:
+        con = sqlite3.connect("files.db")
+        con.execute(
+            "UPDATE files SET name=?, course_code=?, professor=?, year=? WHERE id=? AND author_id=?",
+            (data["name"], data["course_code"], data["professor"], data["year"], id, int(session["user_id"]),)
+        )
+        con.commit()
+
+        print("should be updated")
+        updateSuccess = True
+    except Exception as e:
+        error = str(e)
+        print(f"could not update bc of {e}")
+    finally:
+        con.close()
+
+    return {
+        "updateSuccess": updateSuccess,
+        "error": error
+    }
 
 @app.route('/uploads/<id>', methods=['GET'])
 def access_upload(id):
