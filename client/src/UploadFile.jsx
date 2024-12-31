@@ -55,7 +55,7 @@ export default function UploadFile() {
   
         const data = await result.json();
   
-        const result2 = await fetch('http://127.0.0.1:5000/files', {
+        const result2 = await fetch('http://127.0.0.1:5000/files?type=null&course=null&prof=null', {
           method: 'GET',
           credentials: 'include',
         });
@@ -87,7 +87,7 @@ export default function UploadFile() {
             event.preventDefault();
             const formData = new FormData(event.currentTarget);
             formData.append("file", file)
-            formData.append("type,", type)
+            formData.append("type", type)
             console.log(formData);
             handleUpload(formData);
             handleClose();
@@ -109,17 +109,6 @@ export default function UploadFile() {
           <MenuItem value={"Assignment"}>Assignment</MenuItem>
           <MenuItem value={"Syllabus"}>Syllabus</MenuItem>
         </Select>
-        <TextField
-            autoFocus
-            required
-            margin="dense"
-            id="name"
-            name="title"
-            label="Title"
-            type="text"
-            fullWidth
-            variant="standard"
-          />
           <TextField
             autoFocus
             required

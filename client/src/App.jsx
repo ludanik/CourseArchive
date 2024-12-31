@@ -26,13 +26,12 @@ export default function FileApp() {
               <button onClick={handleLogOut}>Log out</button>
             </div>
         </div>
-        <div id="main">
-          <div>
-            <UploadFile />
-            <SearchFile />
-          </div>
-          <FileList user={user} />
+        <div id="search">
+          <UploadFile />
+          <SearchFile />
         </div>
+        <FileList user={user} />
+        
       </FilesProvider>
     );
   }

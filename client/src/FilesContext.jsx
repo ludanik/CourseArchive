@@ -10,7 +10,7 @@ export const fetchFiles = async (dispatch, handleFetchFiles) => {
 
 const handleFetchFiles = async () => {
   try {
-    const result = await fetch('http://127.0.0.1:5000/files', {
+    const result = await fetch('http://127.0.0.1:5000/files?type=null&course=null&prof=null', {
       method: 'GET',
       credentials: 'include',
     });

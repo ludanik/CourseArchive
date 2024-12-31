@@ -63,18 +63,6 @@ function File({ file, user }) {
   if (isEditing) {
     fileContent = (
       <>
-        <input
-          value={file.name}
-          onChange={e => {
-            dispatch({
-              type: 'changed',
-              file: {
-                ...file,
-                name: e.target.value
-              }
-            });
-          }} />
-          <br/>
           <input
           value={file.professor}
           onChange={e => {
@@ -131,15 +119,7 @@ function File({ file, user }) {
   else {
     fileContent = (
       <>
-        {file.name}
-        <br />
-        {file.professor}
-        <br/>
-        {file.course_code}
-        <br/>
-        {file.year} 
-        <br/>
-        {file.author_name}
+        {file.filename} | {file.type} | {file.course_code} | {file.professor} | {file.year} | {file.author_name}
         <br/>
       </>
     );

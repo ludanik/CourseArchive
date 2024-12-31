@@ -24,7 +24,7 @@ con.execute('''
         id INTEGER UNIQUE PRIMARY KEY AUTOINCREMENT,
         author_id INTEGER NOT NULL,
         filename TEXT NOT NULL,
-        name TEXT NOT NULL,
+        type TEXT NOT NULL,
         course_code TEXT NOT NULL,
         professor TEXT NOT NULL,
         created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -174,20 +174,53 @@ def get_file_list():
             "error":"log in lil bro"
         }
 
-    con = sqlite3.connect("files.db")
-    res = con.execute("""SELECT 
-                        f.id,
-                        f.author_id,
-                        u.username,
-                        f.filename,
-                        f.name,
-                        f.course_code,
-                        f.professor,
-                        f.created,
-                        f.year
-                        FROM files f
-                        JOIN user u ON f.author_id = u.id; """)
+    type = request.args.get('type', default="*", type=str)
+    course = request.args.get('course', default="*", type=str)
+    prof = request.args.get('prof', default="*", type=str)
 
+    query = """
+    SELECT 
+        f.id,
+        f.author_id,
+        u.username,
+        f.filename,
+        f.type,
+        f.course_code,
+        f.professor,
+        f.created,
+        f.year
+    FROM files f
+    JOIN user u ON f.author_id = u.id
+    """
+    queryParams = []
+
+    if type != "null" or course != "null" or prof != "null":
+        query += "WHERE"
+
+    # try not to vomit
+    if type != "null":
+        query += " f.type = ?"
+        queryParams.append(type)
+    if course != "null":
+        if query[-1] == "?":
+            query += " AND f.course_code = ?"
+        else:
+            query += " f.course_code = ?"
+        queryParams.append(course)
+    if prof != "null":
+        if query[-1] == "?":
+            query += " AND f.professor = ?"
+        else:
+            query += " f.professor = ?"
+        queryParams.append(prof)
+
+    if type or course or prof:
+        query += ";"
+
+    con = sqlite3.connect("files.db")
+    print(query)
+    print(queryParams)
+    res = con.execute(query, queryParams)
     res = res.fetchall()
 
     print(res)
@@ -198,7 +231,8 @@ def get_file_list():
                 "id": str(l[0]),
                 "author_id":l[1],
                 "author_name":l[2],
-                "name": l[4],
+                "filename": l[3],
+                "type": l[4],
                 "course_code": l[5],
                 "professor": l[6],
                 "year": l[8],
@@ -235,7 +269,7 @@ def upload_file():
 
             data = {
                 "author_id":session["user_id"],
-                "name":request.form["title"], 
+                "type":request.form["type"], 
                 "filename":filename,
                 "course_code":request.form["code"], 
                 "professor":request.form["prof"], 
@@ -243,13 +277,13 @@ def upload_file():
                 "timestamp":int(time.time()) 
             } 
 
-            data["id"] = abs ( hash(data["name"] + data["filename"] + data["course_code"]) )
+            data["id"] = abs ( hash(data["type"] + data["filename"] + data["course_code"] + str(data["author_id"])) )
 
             print(f"id: {data["id"]}")
             try:
                 con = sqlite3.connect("files.db")
                 with con:   
-                    con.execute("INSERT INTO files VALUES(:id, :author_id, :filename, :name, :course_code, :professor, :timestamp, :year)", data)
+                    con.execute("INSERT INTO files VALUES(:id, :author_id, :filename, :type, :course_code, :professor, :timestamp, :year)", data)
             except sqlite3.IntegrityError:
                 raise sqlite3.IntegrityError
             finally:
@@ -281,8 +315,8 @@ def update(id):
     try:
         con = sqlite3.connect("files.db")
         con.execute(
-            "UPDATE files SET name=?, course_code=?, professor=?, year=? WHERE id=? AND author_id=?",
-            (data["name"], data["course_code"], data["professor"], data["year"], id, int(session["user_id"]),)
+            "UPDATE files SET course_code=?, professor=?, year=? WHERE id=? AND author_id=?",
+            (data["course_code"], data["professor"], data["year"], id, int(session["user_id"]),)
         )
         con.commit()
 
@@ -330,7 +364,7 @@ def delete_file(id):
     id = int(id)
     con = sqlite3.connect("files.db")
     filename = None
-    try:
+    try:    
         res = con.execute("SELECT filename FROM files WHERE id=?", (id,))
         res = res.fetchone()
         if res != None:
